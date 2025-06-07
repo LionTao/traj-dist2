@@ -1,0 +1,131 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '[0-9]+.*'
+  pull_request:
+    branches:
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build_wheels:
+    name: Build wheel for ${{ matrix.python }}-${{ matrix.os.platform_id }}
+    runs-on: ${{ matrix.os.runner }}
+    strategy:
+      # Ensure that a wheel builder finishes even if another fails
+      fail-fast: false
+      matrix:
+        os:
+          - runner: windows-latest
+            platform_id: win_amd64
+          - runner: ubuntu-latest
+            platform_id: manylinux_x86_64
+          - runner: ubuntu-latest
+            platform_id: musllinux_x86_64
+          - runner: ubuntu-24.04-arm
+            platform_id: manylinux_aarch64
+          - runner: ubuntu-24.04-arm
+            platform_id: musllinux_aarch64
+          - runner: macos-13
+            platform_id: macosx_x86_64
+          - runner: macos-14
+            platform_id: macosx_arm64
+          - runner: macos-14
+            platform_id: macosx_universal2
+        python:
+          - cp38
+          - cp39
+          - cp310
+          - cp311
+          - cp312
+          - cp313
+          - cp313t
+          - pp38
+          - pp39
+          - pp310
+          # numpy build may fail on other version
+        exclude:
+          - { python: pp38,os: { platform_id: musllinux_aarch64 } }
+          - { python: pp39,os: { platform_id: musllinux_aarch64 } }
+          - { python: pp310,os: { platform_id: musllinux_aarch64 } }
+          - { python: pp38,os: { platform_id: musllinux_x86_64 } }
+          - { python: pp39,os: { platform_id: musllinux_x86_64 } }
+          - { python: pp310,os: { platform_id: musllinux_x86_64 } }
+          - { python: pp38,os: { platform_id: macosx_universal2 } }
+          - { python: pp39,os: { platform_id: macosx_universal2 } }
+          - { python: pp310,os: { platform_id: macosx_universal2 } }
+
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup version on tag
+        if: startsWith(github.event.ref, 'refs/tags')
+        run: |
+          echo "TRAJ_DIST_2_CI_VERSION=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+
+      - name: Setup version on commit
+        if: startsWith(github.event.ref, 'refs/tags') != true
+        run: |
+          echo "TRAJ_DIST_2_CI_VERSION=0.0.0+$(echo ${GITHUB_REF##*/}).$(echo ${GITHUB_SHA:0:7})" >> $GITHUB_ENV
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.0.0rc2
+        env:
+          CIBW_ENABLE: all
+          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.os.platform_id }}
+          CIBW_ARCHS: all
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_BUILD_FRONTEND: build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.python }}-${{ matrix.os.platform_id }}
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build SDist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup version on tag
+        if: startsWith(github.event.ref, 'refs/tags')
+        run: |
+          echo "TRAJ_DIST_2_CI_VERSION=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+
+      - name: Setup version on commit
+        if: startsWith(github.event.ref, 'refs/tags') != true
+        run: |
+          echo "TRAJ_DIST_2_CI_VERSION=0.0.0+$(echo ${GITHUB_REF##*/}).$(echo ${GITHUB_SHA:0:7})" >> $GITHUB_ENV
+
+      - name: Build SDist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  upload_all:
+    needs: [ build_wheels, build_sdist ]
+    environment: pypi
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.ref, 'refs/tags')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
