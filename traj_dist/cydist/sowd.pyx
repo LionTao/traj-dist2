@@ -5,12 +5,11 @@ STUFF = "Hi"
 
 cimport numpy as np
 import numpy as np
-from libc.stdlib cimport malloc, free
 
 from libc.math cimport fmin
 from basic_euclidean import c_eucl_dist
 from cpython cimport bool
-from numpy.math cimport INFINITY
+from libc.math cimport INFINITY
 
 
 
