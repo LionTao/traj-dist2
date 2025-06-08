@@ -1,14 +1,6 @@
 name: Build
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - '[0-9]+.*'
-  pull_request:
-    branches:
-      - '**'
+on: push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -66,16 +58,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup version on tag
-        if: startsWith(github.event.ref, 'refs/tags')
-        run: |
-          echo "TRAJ_DIST_2_CI_VERSION=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
-
-      - name: Setup version on commit
-        if: startsWith(github.event.ref, 'refs/tags') != true
-        run: |
-          echo "TRAJ_DIST_2_CI_VERSION=0.0.0+$(echo ${GITHUB_REF##*/}).$(echo ${GITHUB_SHA:0:7})" >> $GITHUB_ENV
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.0.0rc2
         env:
@@ -84,6 +66,8 @@ jobs:
           CIBW_ARCHS: all
           CIBW_BUILD_VERBOSITY: 1
           CIBW_BUILD_FRONTEND: build
+          # passthrough GitHub env for version calculation
+          CIBW_ENVIRONMENT_PASS_LINUX: GITHUB_REF GITHUB_SHA
 
       - uses: actions/upload-artifact@v4
         with:
@@ -95,16 +79,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup version on tag
-        if: startsWith(github.event.ref, 'refs/tags')
-        run: |
-          echo "TRAJ_DIST_2_CI_VERSION=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
-
-      - name: Setup version on commit
-        if: startsWith(github.event.ref, 'refs/tags') != true
-        run: |
-          echo "TRAJ_DIST_2_CI_VERSION=0.0.0+$(echo ${GITHUB_REF##*/}).$(echo ${GITHUB_SHA:0:7})" >> $GITHUB_ENV
 
       - name: Build SDist
         run: pipx run build --sdist
