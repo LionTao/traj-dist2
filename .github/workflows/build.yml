@@ -1,6 +1,12 @@
 name: Build
 
-on: push
+on:
+  push:
+    branches:
+      - '*'
+      - '!master'
+    tags:
+      - '[0-9]+.*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -57,6 +63,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Docker images.
+        uses: AndreKurait/docker-cache@0.6.0
+        if: startsWith(matrix.os.runner, 'ubuntu')
+        with:
+          key: docker-${{ matrix.os.platform_id }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.0.0rc2
