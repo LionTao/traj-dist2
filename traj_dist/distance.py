@@ -1,14 +1,14 @@
 from .pydist.linecell import trajectory_set_grid
 
-from .cydist.sspd import c_e_sspd, c_g_sspd
-from .cydist.dtw import c_e_dtw, c_g_dtw
-from .cydist.erp import c_e_erp, c_g_erp
-from .cydist.edr import c_e_edr, c_g_edr
-from .cydist.lcss import c_e_lcss, c_g_lcss
-from .cydist.hausdorff import c_e_hausdorff, c_g_hausdorff
-from .cydist.discret_frechet import c_discret_frechet
-from .cydist.frechet import c_frechet
-from .cydist.sowd import c_sowd_grid
+from .pydist.sspd import e_sspd, s_sspd
+from .pydist.dtw import e_dtw, s_dtw
+from .pydist.erp import e_erp, s_erp
+from .pydist.edr import e_edr, s_edr
+from .pydist.lcss import e_lcss, s_lcss
+from .pydist.hausdorff import e_hausdorff, s_hausdorff
+from .pydist.discret_frechet import discret_frechet
+from .pydist.frechet import frechet
+from .pydist.sowd import sowd_grid
 
 import numpy as np
 
@@ -17,22 +17,22 @@ import warnings
 __all__ = ["pdist", "cdist", "sspd", "sowd_grid", "frechet", "discret_frechet", "hausdorff", "dtw", "lcss", "edr",
            "erp"]
 
-METRIC_DIC = {"spherical": {"sspd": c_g_sspd,
-                            "dtw": c_g_dtw,
-                            "lcss": c_g_lcss,
-                            "hausdorff": c_g_hausdorff,
-                            "sowd_grid": c_sowd_grid,
-                            "erp": c_g_erp,
-                            "edr": c_g_edr},
-              "euclidean": {"sspd": c_e_sspd,
-                            "dtw": c_e_dtw,
-                            "lcss": c_e_lcss,
-                            "hausdorff": c_e_hausdorff,
-                            "discret_frechet": c_discret_frechet,
-                            "frechet": c_frechet,
-                            "sowd_grid": c_sowd_grid,
-                            "erp": c_e_erp,
-                            "edr": c_e_edr}}
+METRIC_DIC = {"spherical": {"sspd": s_sspd,
+                            "dtw": s_dtw,
+                            "lcss": s_lcss,
+                            "hausdorff": s_hausdorff,
+                            "sowd_grid": sowd_grid,
+                            "erp": s_erp,
+                            "edr": s_edr},
+              "euclidean": {"sspd": e_sspd,
+                            "dtw": e_dtw,
+                            "lcss": e_lcss,
+                            "hausdorff": e_hausdorff,
+                            "discret_frechet": discret_frechet,
+                            "frechet": frechet,
+                            "sowd_grid": sowd_grid,
+                            "erp": e_erp,
+                            "edr": e_edr}}
 
 
 # #################
