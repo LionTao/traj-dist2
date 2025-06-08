@@ -11,6 +11,8 @@ traj_dist/include/
 traj_dist/lib/
 traj_dist/pydist/sspd_v1.py
 traj_dist/pydist/sspd_v1.pyc
+traj_dist/cydist/*.c
+traj_dist/cydist/*.pyd
 traj_dist/share/
 traj_dist/ssl/	
 var/

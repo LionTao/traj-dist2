@@ -1,3 +1,7 @@
+## Fork note
+
+Cython code was removed in this fork due to compile failure in newer python version (for now)
+
 # trajectory_distance
 =====================
 
